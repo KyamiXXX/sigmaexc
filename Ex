@@ -1,0 +1,200 @@
+-- SERVICES
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+
+-- SETTINGS
+local CorrectKey = "NewRelease" -- The key to unlock the executor
+local ToggleKey = Enum.KeyCode.F -- Keybind to toggle the Executor
+
+-- VARIABLES
+local isExecutorVisible = false
+local isKeySystemCleared = false
+local dragging = false
+local dragInput, dragStart, dragPos
+
+-- CREATE GUI
+local ScreenGui = Instance.new("ScreenGui", Player:WaitForChild("PlayerGui"))
+ScreenGui.Name = "Val1antExecutor"
+ScreenGui.ResetOnSpawn = false
+
+-- FRAME: Executor
+local ExecutorFrame = Instance.new("Frame", ScreenGui)
+ExecutorFrame.Size = UDim2.new(0, 400, 0, 250)
+ExecutorFrame.Position = UDim2.new(0.5, -200, 0.5, -125)
+ExecutorFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ExecutorFrame.BorderSizePixel = 0
+ExecutorFrame.Visible = false -- Initially hidden
+
+-- Title
+local TitleLabel = Instance.new("TextLabel", ExecutorFrame)
+TitleLabel.Size = UDim2.new(1, 0, 0, 50)
+TitleLabel.Position = UDim2.new(0, 0, 0, 0)
+TitleLabel.Text = "Valiant - Executor"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+TitleLabel.Font = Enum.Font.SourceSansBold
+TitleLabel.TextSize = 24
+TitleLabel.BorderSizePixel = 0
+
+-- Script TextBox
+local ScriptTextBox = Instance.new("TextBox", ExecutorFrame)
+ScriptTextBox.Size = UDim2.new(0.9, 0, 0, 120)
+ScriptTextBox.Position = UDim2.new(0.05, 0, 0.2, 0)
+ScriptTextBox.PlaceholderText = "Write your script here..."
+ScriptTextBox.Text = ""
+ScriptTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+ScriptTextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ScriptTextBox.BorderSizePixel = 1
+ScriptTextBox.Font = Enum.Font.SourceSans
+ScriptTextBox.TextSize = 18
+ScriptTextBox.MultiLine = true
+ScriptTextBox.TextWrapped = true
+
+-- Execute Button
+local ExecuteButton = Instance.new("TextButton", ExecutorFrame)
+ExecuteButton.Size = UDim2.new(0.8, 0, 0, 40)
+ExecuteButton.Position = UDim2.new(0.1, 0, 0.75, 0)
+ExecuteButton.Text = "Execute"
+ExecuteButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ExecuteButton.BackgroundColor3 = Color3.fromRGB(60, 150, 60)
+ExecuteButton.BorderSizePixel = 0
+ExecuteButton.Font = Enum.Font.SourceSansBold
+ExecuteButton.TextSize = 18
+
+-- Fake Injection Label
+local InjectLabel = Instance.new("TextLabel", ExecutorFrame)
+InjectLabel.Size = UDim2.new(1, 0, 0, 30)
+InjectLabel.Position = UDim2.new(0, 0, 0.9, 0)
+InjectLabel.Text = ""
+InjectLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+InjectLabel.BackgroundTransparency = 1
+InjectLabel.Font = Enum.Font.SourceSans
+InjectLabel.TextSize = 16
+
+-- Kill Button (Smaller Size)
+local KillButton = Instance.new("TextButton", ExecutorFrame)
+KillButton.Size = UDim2.new(0.1, 0, 0, 30)  -- Smaller width and height
+KillButton.Position = UDim2.new(0.9, -35, 0, 10)  -- Slightly adjusted position
+KillButton.Text = "Kill"
+KillButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+KillButton.BackgroundColor3 = Color3.fromRGB(200, 30, 30)
+KillButton.BorderSizePixel = 0
+KillButton.Font = Enum.Font.SourceSansBold
+KillButton.TextSize = 14  -- Smaller text size
+
+-- Function to delete the entire executor when the Kill Button is pressed
+local function killExecutor()
+    ExecutorFrame:Destroy()  -- This will delete the GUI and its components
+    game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("ExecutorGui"):Destroy()  -- Deletes the GUI from the PlayerGui as well
+end
+
+KillButton.MouseButton1Click:Connect(killExecutor)
+
+
+-- FUNCTIONS
+local function toggleExecutor()
+    isExecutorVisible = not isExecutorVisible
+    ExecutorFrame.Visible = isExecutorVisible
+end
+
+local function checkKey()
+    -- Only proceed if the key system is cleared
+    if not isKeySystemCleared then
+        local enteredKey = ScriptTextBox.Text
+        if enteredKey == CorrectKey then
+            print("Key is correct! Unlocking Executor...")
+            -- Unlock Executor here
+            isKeySystemCleared = true
+            ExecutorFrame.Visible = true -- Show the Executor after clearing the key system
+        else
+            InjectLabel.Text = "Invalid Key. Try Again."
+            InjectLabel.TextColor3 = Color3.fromRGB(255, 30, 30)
+        end
+    end
+end
+
+local function executeScript()
+    local scriptCode = ScriptTextBox.Text
+    InjectLabel.Text = "Injecting..."
+    InjectLabel.TextColor3 = Color3.fromRGB(255, 255, 30)
+    
+    -- Fake inject animation: Change text over time
+    wait(1)
+    InjectLabel.Text = "Executing..."
+    InjectLabel.TextColor3 = Color3.fromRGB(30, 255, 30)
+    
+    -- Simulate script execution
+    wait(1)
+    local success, err = pcall(function()
+        loadstring(scriptCode)()  -- Executes the script
+    end)
+
+    -- Check if the execution was successful or if there was an error
+    if success then
+        InjectLabel.Text = "Execution Complete"
+        InjectLabel.TextColor3 = Color3.fromRGB(30, 255, 30)
+    else
+        InjectLabel.Text = "Error: " .. err
+        InjectLabel.TextColor3 = Color3.fromRGB(255, 30, 30)
+    end
+end
+
+local function closeExecutor()
+    ExecutorFrame.Visible = false  -- Simply hides the executor frame
+end
+
+-- DRAGGING LOGIC
+local function beginDrag(input)
+    dragging = true
+    dragStart = input.Position
+    dragPos = ExecutorFrame.Position
+end
+
+local function updateDrag(input)
+    if dragging then
+        local delta = input.Position - dragStart
+        ExecutorFrame.Position = UDim2.new(
+            dragPos.X.Scale, dragPos.X.Offset + delta.X,
+            dragPos.Y.Scale, dragPos.Y.Offset + delta.Y
+        )
+    end
+end
+
+local function endDrag()
+    dragging = false
+end
+
+-- Make the Title Label draggable
+TitleLabel.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        beginDrag(input)
+    end
+end)
+
+TitleLabel.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        updateDrag(input)
+    end
+end)
+
+TitleLabel.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        endDrag()
+    end
+end)
+
+-- EVENT CONNECTIONS
+ExecuteButton.MouseButton1Click:Connect(executeScript)
+KillButton.MouseButton1Click:Connect(closeExecutor)
+
+-- TOGGLE EXECUTOR WITH KEYBIND
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == ToggleKey then
+        toggleExecutor()
+    elseif input.KeyCode == Enum.KeyCode.Return then
+        -- When the Enter key is pressed, validate the key
+        checkKey()
+    end
+end)
